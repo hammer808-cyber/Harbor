@@ -1,0 +1,63 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-surface: #fbf9f5;
+  --color-surface-dim: #dbdad6;
+  --color-surface-bright: #fbf9f5;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f5f3ef;
+  --color-surface-container: #efeeea;
+  --color-surface-container-high: #eae8e4;
+  --color-surface-container-highest: #e4e2de;
+  --color-on-surface: #1b1c1a;
+  --color-on-surface-variant: #42484b;
+  --color-outline: #72787c;
+  --color-outline-variant: #c2c7cc;
+  
+  --color-primary: #426373;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #8eafc1;
+  --color-on-primary-container: #224352;
+  
+  --color-secondary: #546349;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #d8e8c7;
+  --color-on-secondary-container: #5a694f;
+  
+  --color-tertiary: #84523d;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #da9c83;
+  --color-on-tertiary-container: #5f3320;
+
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-3xl: 3rem;
+}
+
+@layer base {
+  body {
+    @apply bg-surface text-on-surface font-sans antialiased;
+    min-height: 100dvh;
+  }
+}
+
+@layer utilities {
+  .misty-shadow {
+    box-shadow: 0 4px 40px rgba(142, 175, 193, 0.15);
+  }
+  
+  .glass {
+    @apply bg-white/40 backdrop-blur-xl border border-white/20;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
