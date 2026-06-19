@@ -1,0 +1,58 @@
+{
+  "summary": "Frontend-only Harbor app (Vite + React) tested via preview URL. Most flows pass: Entrance->Today, bottom nav, mode selector, Best Bet Launch->Flow, Help-me-choose 5-step questionnaire with results (3 cards normally, 1 card in Survival mode), Brain Dump parse + Dock All into Current, Do or Dump verdicts and empty state, Shrink sheet with 4 options, Recommendation card Break-it adds quick win, Deep archive tabs, and localStorage persistence across reload. One critical UI/integration bug found: the bottom navigation (especially the floating center 'Choose' compass button with -mt-6 negative margin) intercepts pointer events at the bottom of bottom sheets (TaskEditor and Project sheet), blocking the Save button on mobile (390x844). This prevented creating tasks via the Current task editor and creating projects via the Project sheet. Real users on mobile will likely hit this. No console errors. All requested data-testids are present.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Layout bottom nav + common.Sheet",
+        "issue": "Floating center 'Choose' compass NavItem (uses '-mt-6' negative margin) sits ABOVE the bottom sheet's save button area and intercepts pointer events even though the Sheet wrapper has z-[100] and nav has z-50. Playwright reports: '<div class=\"w-14 h-14 rounded-full ...\"> from <nav ... z-50 ...> subtree intercepts pointer events'. On a 390x844 mobile viewport, after scrolling the Project sheet / TaskEditor sheet to reveal the Save button, the center floating button overlaps and steals the click. Result: tapping Save can navigate to the Choose questionnaire instead of saving. Tasks created via current-add-btn never reach localStorage (harbor.tasks.v1 stays at 6 seed entries) and projects created never reach localStorage (harbor.projects.v1 stays []). This breaks two of the documented flows: 'Current screen add a new task' and 'Projects new project creation'.",
+        "selector": "[data-testid=\"task-save-btn\"], [data-testid=\"project-save-btn\"], [data-testid=\"nav-choose\"]",
+        "priority": "HIGH"
+      },
+      {
+        "component": "Choose screen state",
+        "issue": "Choose component holds local useState for step/ctx; navigating to nav-choose while already on the choose screen does NOT reset the questionnaire to step 0 (results screen stays visible). Likely fix: reset on screen mount or expose a 'restart' affordance from nav-choose. (Minor UX bug — there is an 'Ask me again' button on results that does the reset.)",
+        "selector": "[data-testid=\"nav-choose\"]",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Create task via TaskEditor (current-add-btn -> task-save-btn)",
+        "issue": "Save click intercepted by bottom nav center button; task is never persisted. Fix the z-index/pointer-events overlap or add pb-32 inside the sheet content so save button never falls behind nav.",
+        "affected_selectors": ["[data-testid=\"task-editor-sheet\"]", "[data-testid=\"task-save-btn\"]"]
+      },
+      {
+        "flow": "Create project (project-new-btn -> project-save-btn)",
+        "issue": "Same overlap problem — Save click blocked by bottom nav. harbor.projects.v1 remains empty after save attempt.",
+        "affected_selectors": ["[data-testid=\"project-sheet\"]", "[data-testid=\"project-save-btn\"]"]
+      }
+    ],
+    "design_issues": [
+      {
+        "screen": "Bottom sheets (TaskEditor, Project sheet, ShrinkSheet)",
+        "issues": [
+          "Sheet max-h-[88vh] plus a tall form means the save button sits in the same vertical band as the fixed bottom nav (esp. the popped-up center compass). Add bottom padding inside the sheet (e.g., pb-28) or raise sheet z-index above the nav via a portal/root-level rendering, and lower nav pointer-events on overlap. Also consider hiding the bottom nav while a sheet is open (currentScreen-aware Layout could toggle it)."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Fix bottom-sheet save button being blocked by the bottom nav's floating Choose compass. Suggested fixes (any one):\n   a) Render Sheet via React portal at document.body so it's outside any stacking parent.\n   b) Hide / disable pointer-events on the bottom <nav> when a Sheet is open (add a global open state or use a context).\n   c) Increase bottom padding inside Sheet content (e.g., add pb-28 to inner content) so the save button never sits behind the nav.\n   This bug breaks: TaskEditor save (Current add task) and Project save.",
+    "Reset Choose component state when nav-choose is tapped while already on the Choose results screen (so users can start a fresh questionnaire from the nav).",
+    "Optional: Sky selection buttons on Entrance don't have data-testid='sky-clear' etc. The spec's recommendation engine bug-fix tests in CI would benefit from those testids."
+  ],
+  "critical_code_review_comments": [
+    "Sheet (common.tsx) is not rendered via React portal; it's a sibling of the bottom nav under the same Layout stacking parents, leading to z-index conflicts with the floating center NavItem (-mt-6). Consider createPortal to document.body.",
+    "Choose component keeps step/ctx in local useState; navigation via nav-choose does not reset it. Consider lifting state to App or resetting via key={currentScreen} pattern.",
+    "Layout's bottom <nav> remains visible and clickable when sheets are open — not standard mobile UX. Consider conditionally hiding the nav or using inert/aria-hidden when a modal is open."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (no backend)", "frontend": "85%"},
+  "seed_data_creation": "App auto-seeds 6 tasks on first load (harbor.seeded.v1 flag). Tested by clearing localStorage and reloading.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All data-testids in the spec are wired correctly (verified: today-dashboard, today-bestbet, today-bestbet-start, mode-selector, mode-focus/tidy/survival, row-quickwins, help-me-choose, today-doordump, nav-today/dump/choose/current/projects/deep, choose-next/back, choose-mode-survival, choose-results, rec-card-best-bet/easy-win/future-you[-start/-snooze/-break/-dump], shrink-sheet, shrink-option-0..3, braindump-textarea, braindump-parse-btn, braindump-review, draft-title-*, braindump-save-all, current-screen, current-filter-all/active/docked/snoozed, current-add-btn, current-task-*, doordump-screen/empty, verdict-do/dock/shrink/dump, projects-screen, project-new-btn/sheet/title-input/goal-input/nextstep-input/deadline-input/save-btn, task-editor-sheet, task-title-input, task-save-btn, deep-tab-dumped/completed). The only blocking integration issues are Project save and Task save being intercepted by the bottom nav's center 'Choose' button on mobile widths. Persistence (localStorage harbor.tasks.v1, harbor.projects.v1) works correctly when saves actually fire (verified via Brain Dump save-all and Shrink suggestion which DO persist). Survival mode correctly yields exactly 1 recommendation. No backend exists (supervisor 'backend' is FATAL by design).",
+  "rca of the issue": "Project save & TaskEditor save fail because: 1) common.tsx Sheet is rendered inline within the screen component tree (no portal), placing it as a child inside the Layout stacking context. 2) Layout's bottom <nav> is fixed/z-50 and contains a center NavItem with className includes '-mt-6' that visually pops above the nav band into the area where the Sheet's save button sits when scrolled to bottom. 3) Although Sheet wrapper sets z-[100], the floating NavItem still receives pointer events at its visual coordinates because the user (and Playwright) clicks at the save button's center — which on a 390x844 viewport overlaps the floating compass button — and that compass button is the topmost interactive element at those coordinates due to position/transform/stacking interactions (likely due to Sheet's inner motion.div creating its own stacking context that doesn't extend to cover the entire fixed inset). Reproduction: open Project sheet, fill title, click project-save-btn -> nav-choose fires instead. Mitigation: render Sheet via React portal, OR add pb-28+ inside sheet content body, OR hide bottom nav while any sheet is open."
+}
