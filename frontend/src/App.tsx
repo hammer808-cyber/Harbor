@@ -19,8 +19,12 @@ function HarborApp() {
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('entrance');
   const [skyState, setSkyState] = useState<SkyState>('clear');
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [chooseKey, setChooseKey] = useState(0);
 
-  const navigateTo = useCallback((screen: ScreenType) => setCurrentScreen(screen), []);
+  const navigateTo = useCallback((screen: ScreenType) => {
+    if (screen === 'choose') setChooseKey((k) => k + 1);
+    setCurrentScreen(screen);
+  }, []);
 
   const handleStartTask = (task: Task) => {
     setActiveTask(task);
@@ -50,6 +54,7 @@ function HarborApp() {
       case 'choose':
         return (
           <Choose
+            key={chooseKey}
             initialContext={contextFromSky(skyState)}
             onStartTask={handleStartTask}
             onBack={() => navigateTo('today')}

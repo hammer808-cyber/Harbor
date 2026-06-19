@@ -6,6 +6,7 @@
  */
 
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
@@ -100,11 +101,11 @@ export function Sheet({
   children: React.ReactNode;
   testId?: string;
 }) {
-  return (
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[100] flex items-end md:items-center justify-center"
+          className="fixed inset-0 z-[200] flex items-end md:items-center justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -119,7 +120,7 @@ export function Sheet({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 60, opacity: 0 }}
             transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-            className="relative z-10 w-full md:max-w-lg max-h-[88vh] overflow-y-auto scrollbar-hide bg-surface rounded-t-3xl md:rounded-3xl p-6 shadow-2xl"
+            className="relative z-10 w-full md:max-w-lg max-h-[90vh] overflow-y-auto scrollbar-hide bg-surface rounded-t-3xl md:rounded-3xl p-6 pb-28 md:pb-6 shadow-2xl"
           >
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-xl font-bold text-primary">{title}</h3>
@@ -135,7 +136,8 @@ export function Sheet({
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
 

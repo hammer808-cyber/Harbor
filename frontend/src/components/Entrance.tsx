@@ -39,6 +39,7 @@ export function Entrance({ skyState, onSetSky, onContinue }: EntranceProps) {
         {options.map((option) => (
           <button
             key={option.id}
+            data-testid={`sky-${option.id}`}
             onClick={() => onSetSky(option.id)}
             className={cn(
               "flex items-center justify-center gap-3 px-4 py-4 rounded-2xl transition-all duration-500",
@@ -56,6 +57,7 @@ export function Entrance({ skyState, onSetSky, onContinue }: EntranceProps) {
       <div className="pt-8 space-y-6">
         <button 
           onClick={onContinue}
+          data-testid="set-sail-btn"
           className="w-full max-w-sm py-5 bg-primary text-on-primary rounded-3xl font-bold text-lg shadow-xl hover:shadow-primary/20 active:scale-95 transition-all"
         >
           Set Sail

@@ -1,0 +1,24 @@
+{
+  "summary": "Retest of HIGH bug (bottom-sheet Save intercepted by floating Choose nav) and MEDIUM bug (Choose questionnaire not resetting). Both fixes verified working on mobile viewport 390x844. Task creation (Current -> task-editor-sheet -> task-save-btn) now closes the sheet, persists to harbor.tasks.v1, and renders in the Current list — no navigation to Choose. Project creation (project-sheet -> project-save-btn) now closes the sheet, persists to harbor.projects.v1, and renders as a project-card. Choose now correctly resets to Step 1 ('How much time do you have?') when nav-choose is tapped from the results screen (key={chooseKey} bump confirmed). All 4 regression items pass: Brain Dump parse+save persists tasks, Best Bet Launch opens flow-screen, Survival mode yields exactly 1 recommendation card, Do or Dump verdicts work. No console/page errors during the session.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Sheet now correctly uses React createPortal(document.body) with z-[200] + pb-28 inner padding — clean fix.",
+    "App.tsx uses chooseKey state incremented in navigateTo('choose') and passed as key={chooseKey} to <Choose>, forcing a full remount and reset of internal step/ctx state. Idiomatic React pattern.",
+    "Optional polish (not blocking): Layout's bottom nav still remains visible while sheets are open. Since the sheet is now portaled above with z-[200], pointer interception is resolved, but visually the nav peeks behind the sheet's bottom padding. Consider aria-hidden/inert on the nav while a sheet is open for accessibility (screen readers can still reach nav buttons under the modal)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (no backend)", "frontend": "100%"},
+  "test_credentials": "None required.",
+  "seed_data_creation": "App auto-seeds 6 tasks on first load via harbor.seeded.v1 flag. Tests cleared localStorage before each run.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration_1 reported 2 bugs (HIGH bottom-sheet save interception, MEDIUM Choose-no-reset). Iteration_2 confirms BOTH FIXED. Verified flows on mobile 390x844: 1) Task save via Current -> task-editor-sheet works and persists to localStorage harbor.tasks.v1. 2) Project save via project-sheet works and persists to harbor.projects.v1. 3) Tapping nav-choose after reaching choose-results correctly resets to Step 1 (How much time question), with choose-next visible and choose-results hidden. Regressions verified: Brain Dump persists tasks; today-bestbet-start opens flow-screen; Survival mode yields exactly 1 recommendation (rec-card-best-bet) — note: spec testids include child action buttons (-start/-snooze/-break/-dump) so counting all rec-card-* will overcount; filter to top-level cards or use unique parents. Do or Dump verdict-do works.",
+  "rca of the issue": "Previous iteration's RCA was correct. Fix applied as recommended option (a): Sheet now renders via createPortal(document.body), escaping the Layout stacking context, with z-[200] (above nav z-50) and pb-28 inner padding. Choose reset implemented via key={chooseKey} (option recommended in iter_1 code review). Verified by Playwright clicks landing on the actual save buttons (no pointer interception), data persisting to localStorage, and the sheets closing as expected."
+}
